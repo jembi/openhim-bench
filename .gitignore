@@ -1,0 +1,4 @@
+node_modules/
+/openhim-js.sublime-project
+/openhim-js.sublime-workspace
+.idea/**

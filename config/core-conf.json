@@ -1,0 +1,31 @@
+{
+  "mongo": {
+    "url": "mongodb://localhost/openhim-bench"
+  },
+  "router": {
+    "httpPort": 6001,
+    "httpsPort": 6000,
+    "timeout": 60000
+  },
+  "api": {
+    "httpsPort": 6003
+  },
+  "rerun": {
+    "httpPort": 6100,
+    "host": "localhost"
+  },
+  "tcpAdapter": {
+    "httpReceiver": {
+      "httpPort": 6101,
+      "host": "localhost"
+    }
+  },
+  "polling": {
+    "pollingPort": 6103,
+    "host": "localhost"
+  },
+  "authentication": {
+    "enableMutualTLSAuthentication": false,
+    "enableBasicAuthentication": true
+  }
+}
