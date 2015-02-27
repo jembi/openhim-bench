@@ -1,4 +1,42 @@
 loadtest = require 'loadtest'
+MongoClient = require("mongodb").MongoClient
+os = require 'os'
+
+db = null
+
+
+getSystemInfo = ->
+  platform: os.platform()
+  arch: os.arch()
+  release: os.release()
+  totalmem: os.totalmem()
+  cpus: os.cpus()
+
+
+exports.initMongo = initMongo = (callback) ->
+  return callback null, db if db?
+  # TODO make host configurable
+  mongoHost = 'localhost'
+  MongoClient.connect "mongodb://#{mongoHost}/openhim-bench-results", (err, database) ->
+    return callback err, null if err
+    db = database
+    callback null, db
+
+addResultsToMongo = (benchmarkName, results, callback) ->
+  initMongo (err, db) ->
+    return callback err if err
+
+    key = benchmarkName.replace /[^\w]/g, ''
+
+    mongoCollection = db?.collection key
+    index = date: 1
+    mongoCollection.ensureIndex date: 1, (err, indexName) ->
+      return callback err if err
+      results.name = benchmarkName
+      results.date = new Date()
+      results.system = getSystemInfo()
+      mongoCollection.insert results, callback
+
 
 exports.getHostAndPort = ->
   res = {}
@@ -15,18 +53,25 @@ exports.getHostAndPort = ->
 
   return res
 
+exports.exit = exit = (err) ->
+  db.close()
+  if err
+    console.log err
+    process.exit 1
+  else
+    process.exit 0
 
 exports.runBenchmarks = runBenchmarks = (host, port, benchmarks) ->
-  return if benchmarks.length is 0
+  return exit null if benchmarks.length is 0
 
   benchmark = benchmarks[0](host, port)
   console.log "\nBenchmark: #{benchmark.name}"
 
   loadtest.loadTest benchmark.options, (err, results) ->
-    if err
-      console.log err
-    else
-      #TODO something more exiting with the results! e.g. html reports
-      console.log results
+    return exit err if err
 
-    runBenchmarks host, port, benchmarks[1..]
+    console.log results
+
+    addResultsToMongo benchmark.name, results, (err) ->
+      return exit err if err
+      runBenchmarks host, port, benchmarks[1..]

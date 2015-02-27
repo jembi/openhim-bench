@@ -2,7 +2,7 @@ bench = require './benchmark-common'
 fs = require 'fs'
 
 getEncounter10 = (host, port) ->
-  name: 'Get Encounter 10'
+  name: 'OpenHIE Get Encounter 10'
   options:
     url: "http://#{host}:#{port}/xdsregistry"
     maxRequests: 10
@@ -14,7 +14,7 @@ getEncounter10 = (host, port) ->
       Authorization: 'Basic YmVuY2g6YmVuY2g='
 
 getEncounter10seconds = (host, port) ->
-  name: 'Get Encounter 10 seconds'
+  name: 'OpenHIE Get Encounter 10 seconds'
   options:
     url: "http://#{host}:#{port}/xdsregistry"
     maxSeconds: 10
@@ -26,7 +26,7 @@ getEncounter10seconds = (host, port) ->
       Authorization: 'Basic YmVuY2g6YmVuY2g='
 
 saveEncounter10 = (host, port) ->
-  name: 'Save Encounter 10'
+  name: 'OpenHIE Save Encounter 10'
   options:
     url: "http://#{host}:#{port}/xdsrepository"
     maxRequests: 10
@@ -38,7 +38,7 @@ saveEncounter10 = (host, port) ->
       Authorization: 'Basic YmVuY2g6YmVuY2g='
 
 saveEncounter10seconds = (host, port) ->
-  name: 'Save Encounter 10 seconds'
+  name: 'OpenHIE Save Encounter 10 seconds'
   options:
     url: "http://#{host}:#{port}/xdsrepository"
     maxSeconds: 10

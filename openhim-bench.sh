@@ -5,6 +5,8 @@ Usage: $0 [OPTIONS...]
 
 Run a Benchmark Suite on an OpenHIM instance. The suite will manage the OpenHIM and mediator instances unless the -s option is used. If used, your OpenHIM instance will need to be configured correctly for the tests. You can use the /config/core-conf-mongo-setup.js script to setup your mongo instance with the correct channels and client.
 
+Benchmark results will be saved in mongo (openhim-bench-results) and an html report will be generated, available in the results/ folder.
+
 OPTIONS are:
     -b BRANCH
         Benchmark a particular github branch. Defaults to master.
@@ -117,9 +119,10 @@ function popdir {
 }
 
 
-# Clear logs
+# Clear logs and previous results
 
 rm -f logs/*;
+rm -fR results/*;
 
 # npm install
 
@@ -245,6 +248,24 @@ if [ "$openhieSuite" = true ]; then
     coffee benchmark-openhie.coffee $url;
     echo "";
 fi
+
+
+# Generate report
+
+echo -n "Generating report... "
+
+pushdir
+    cd results;
+    tar -xzf ../resources/report-assets.tar.gz;
+popdir
+
+if [ "$openhieSuite" = true ]; then
+    coffee generate-report.coffee -o;
+else
+    coffee generate-report.coffee;
+fi
+
+echo "done";
 
 
 # Shutdown instances
