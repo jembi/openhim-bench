@@ -65,16 +65,34 @@ while getopts ":b:hor:s:x" opt; do
 done
 
 
+function unlockAndExit {
+    rm -f .lock;
+    exit $1;
+}
+
+# Locking
+
+if [ -f .lock ]; then
+    echo "It looks like another benchmark instance is already running. Aborting.";
+    echo -e "\nIf you believe this to be an error, then delete the .lock file manually and try again.";
+    exit 0;
+fi
+
+touch .lock;
+
+
+# Dependencies
+
 echo -n "Checking dependencies... "
-git --version >/dev/null 2>&1 || { echo "git is required but is not installed." >&2; exit 1; }
-node --version >/dev/null 2>&1 || { echo "node.js is required but is not installed." >&2; exit 1; }
-npm --version >/dev/null 2>&1 || { echo "npm is required but is not installed." >&2; exit 1; }
-coffee --version >/dev/null 2>&1 || { echo "coffee-script is required but is not installed. Have you installed it globally?" >&2; exit 1; }
-mongo --version >/dev/null 2>&1 || { echo "mongodb is required but is not installed." >&2; exit 1; }
+git --version >/dev/null 2>&1 || { echo "git is required but is not installed." >&2; unlockAndExit 1; }
+node --version >/dev/null 2>&1 || { echo "node.js is required but is not installed." >&2; unlockAndExit 1; }
+npm --version >/dev/null 2>&1 || { echo "npm is required but is not installed." >&2; unlockAndExit 1; }
+coffee --version >/dev/null 2>&1 || { echo "coffee-script is required but is not installed. Have you installed it globally?" >&2; unlockAndExit 1; }
+mongo --version >/dev/null 2>&1 || { echo "mongodb is required but is not installed." >&2; unlockAndExit 1; }
 if [ "$openhieSuite" = true ]; then
-    javac -version >/dev/null 2>&1 || { echo "jdk is required for the OpenHIE suite but is not installed." >&2; exit 1; }
-    mvn -version >/dev/null 2>&1 || { echo "maven is required for the OpenHIE suite but is not installed." >&2; exit 1; }
-    perl -version >/dev/null 2>&1 || { echo "perl is required for the OpenHIE suite but is not installed." >&2; exit 1; }
+    javac -version >/dev/null 2>&1 || { echo "jdk is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
+    mvn -version >/dev/null 2>&1 || { echo "maven is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
+    perl -version >/dev/null 2>&1 || { echo "perl is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
 fi
 echo "done"
 
@@ -133,7 +151,7 @@ if [ "$selfManaged" = false ]; then
             npm install >> ../../logs/openhim-core-setup.log 2>&1;
             if [ $? -ne 0 ]; then
                 echo -e "\nA problem occurred while building core. Check the logs for details.";
-                exit 1;
+                unlockAndExit 1;
             fi
         popdir
 
@@ -154,7 +172,7 @@ if [ "$selfManaged" = false ]; then
                 mvn install -DskipTests=true >> ../../logs/xds-mediator-setup.log 2>&1;
                 if [ $? -ne 0 ]; then
                     echo -e "\nA problem occurred while building the XDS.b mediator. Check the logs for details.";
-                    exit 1;
+                    unlockAndExit 1;
                 fi
             popdir
         fi
@@ -214,6 +232,14 @@ echo "Running benchmark-basic";
 coffee benchmark-basic.coffee $url;
 echo "";
 
+if [ "$selfManaged" = false ]; then
+    # Benchmark the mock service direclty at high concurrency
+    # for comparison to the core results
+    echo "Running benchmark-mockservice";
+    coffee benchmark-mockservice.coffee "localhost:6050";
+    echo "";
+fi
+
 if [ "$openhieSuite" = true ]; then
     echo "Running benchmark-openhie";
     coffee benchmark-openhie.coffee $url;
@@ -240,3 +266,5 @@ if [ "$selfManaged" = false ]; then
 
     echo "done";
 fi
+
+unlockAndExit 0
