@@ -257,7 +257,8 @@ echo -n "Generating report... "
 pushdir
     cd results;
     tar -xzf ../resources/report-assets.tar.gz;
-    chmod -R 755 assets/;
+    chmod 755 assets;
+    chmod 755 assets/*;
 popdir
 
 if [ "$openhieSuite" = true ]; then
