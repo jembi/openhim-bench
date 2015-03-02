@@ -288,4 +288,4 @@ do -> bench.initMongo (err, db) ->
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      fs.writeFile "results/index.html", buildHtml(benchmarkResults), -> bench.exit()
+      fs.writeFile "#{bench.appRoot}/results/index.html", buildHtml(benchmarkResults), -> bench.exit()

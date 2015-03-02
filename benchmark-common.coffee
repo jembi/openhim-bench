@@ -2,6 +2,9 @@ loadtest = require 'loadtest'
 MongoClient = require("mongodb").MongoClient
 os = require 'os'
 
+path = require 'path'
+exports.appRoot = path.resolve(__dirname)
+
 db = null
 
 

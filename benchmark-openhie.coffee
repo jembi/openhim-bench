@@ -8,7 +8,7 @@ getEncounter10 = (host, port) ->
     maxRequests: 10
     concurrency: 1
     method: 'POST'
-    body: "#{fs.readFileSync 'resources/adhocRequest_wSoap.xml'}"
+    body: "#{fs.readFileSync "#{bench.appRoot}/resources/adhocRequest_wSoap.xml}"}"
     contentType: 'application/soap+xml'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -20,7 +20,7 @@ getEncounter10seconds = (host, port) ->
     maxSeconds: 10
     concurrency: 1
     method: 'POST'
-    body: "#{fs.readFileSync 'resources/adhocRequest_wSoap.xml'}"
+    body: "#{fs.readFileSync "#{bench.appRoot}/resources/adhocRequest_wSoap.xml}"}"
     contentType: 'application/soap+xml'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -32,7 +32,7 @@ saveEncounter10 = (host, port) ->
     maxRequests: 10
     concurrency: 1
     method: 'POST'
-    body: "#{fs.readFileSync 'resources/pnr_wSoap.xml'}"
+    body: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
     contentType: 'application/soap+xml'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -44,7 +44,7 @@ saveEncounter10seconds = (host, port) ->
     maxSeconds: 10
     concurrency: 1
     method: 'POST'
-    body: "#{fs.readFileSync 'resources/pnr_wSoap.xml'}"
+    body: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
     contentType: 'application/soap+xml'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='

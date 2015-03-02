@@ -20,7 +20,7 @@ basicPOST100 = (host, port) ->
     method: 'POST'
     body:
       bench: 'openhim'
-      content: "#{fs.readFileSync 'resources/pnr_wSoap.xml'}"
+      content: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
     contentType: 'application/json'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -44,7 +44,7 @@ basicPOST10second = (host, port) ->
     method: 'POST'
     body:
       bench: 'openhim'
-      content: "#{fs.readFileSync 'resources/pnr_wSoap.xml'}"
+      content: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
     contentType: 'application/json'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -68,7 +68,7 @@ basicPOST10secondConcurrent = (host, port) ->
     method: 'POST'
     body:
       bench: 'openhim'
-      content: "#{fs.readFileSync 'resources/pnr_wSoap.xml'}"
+      content: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
     contentType: 'application/json'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -92,7 +92,7 @@ basicPOST10secondHighConcurrent = (host, port) ->
     method: 'POST'
     body:
       bench: 'openhim'
-      content: "#{fs.readFileSync 'resources/pnr_wSoap.xml'}"
+      content: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
     contentType: 'application/json'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
