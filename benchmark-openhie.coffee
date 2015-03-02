@@ -32,7 +32,7 @@ saveEncounter10 = (host, port) ->
     maxRequests: 10
     concurrency: 1
     method: 'POST'
-    body: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
+    body: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSOAP.xml"}"
     contentType: 'application/soap+xml'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
@@ -44,7 +44,7 @@ saveEncounter10seconds = (host, port) ->
     maxSeconds: 10
     concurrency: 1
     method: 'POST'
-    body: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSoap.xml"}"
+    body: "#{fs.readFileSync "#{bench.appRoot}/resources/pnr_wSOAP.xml"}"
     contentType: 'application/soap+xml'
     headers:
       Authorization: 'Basic YmVuY2g6YmVuY2g='
