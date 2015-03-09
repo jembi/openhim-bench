@@ -102,6 +102,9 @@ if [ "$openhieSuite" = true ]; then
     mvn -version >/dev/null 2>&1 || { echo "maven is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
     perl -version >/dev/null 2>&1 || { echo "perl is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
 fi
+if [ "$profile" = true ]; then
+    perf --version >/dev/null 2>&1 || { echo "perf_events is required but is not installed." >&2; unlockAndExit 1; }
+fi
 echo "done"
 
 
