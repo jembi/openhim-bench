@@ -20,6 +20,8 @@ OPTIONS are:
         Self managed instance. The benchmark suite will not manage the OpenHIM and mediator instances. A TARGET for the benchmark must be specified and takes the form HOSTNAME:PORT (WITHOUT anything extra like the scheme, paths or forward slashes)
     -x MEDIATOR_PROPERTIES
         [OpenHIE Suite] A file containing the XDS.b Mediator properties. You can create a copy of config/xds-mediator.properties to get you started.
+    -p
+        Profile the application using perf_events and produce a flame graph in the results. Note: You must allow perf to run in userspace to run this without root. To do this execute: echo '-1' | sudo tee /proc/sys/kernel/perf_event_paranoid.
 
 EOF
 )
@@ -27,13 +29,14 @@ EOF
 branch="master"
 url="localhost:6001"
 selfManaged=false
+profile=false
 
 openhieSuite=false
 xdsMediatorBranch="master"
 xdsProps="config/xds-mediator.properties"
 
 
-while getopts ":b:hor:s:x" opt; do
+while getopts ":b:hor:s:xp" opt; do
     case $opt in
         b)
             branch=$OPTARG
@@ -54,6 +57,9 @@ while getopts ":b:hor:s:x" opt; do
             ;;
         x)
             xdsProps=$OPTARG
+            ;;
+        p)
+            profile=true
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -96,6 +102,9 @@ if [ "$openhieSuite" = true ]; then
     mvn -version >/dev/null 2>&1 || { echo "maven is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
     perl -version >/dev/null 2>&1 || { echo "perl is required for the OpenHIE suite but is not installed." >&2; unlockAndExit 1; }
 fi
+if [ "$profile" = true ]; then
+    perf --version >/dev/null 2>&1 || { echo "perf_events is required but is not installed." >&2; unlockAndExit 1; }
+fi
 echo "done"
 
 
@@ -109,6 +118,8 @@ mockcsdPID=""
 mockpixPID=""
 mockregPID=""
 mockrepPID=""
+
+perfPID=""
 
 function pushdir {
     pushd . > /dev/null 2>&1;
@@ -130,6 +141,27 @@ echo -n "Running npm install... ";
 npm install > logs/npm-install.log 2>&1;
 echo "done";
 
+# Install flamegraph tools
+
+if [ "$profile" = true ]; then
+    echo -n "Preparing flamegraph tools... ";
+
+    pushdir
+        cd workspace;
+
+        if [ ! -d "FlameGraph" ]; then
+            echo -e "\nCloning https://github.com/brendangregg/FlameGraph.git"
+            git clone https://github.com/brendangregg/FlameGraph.git >> ../logs/flame-graph-setup.log 2>&1;
+        fi
+
+        pushdir
+            cd FlameGraph;
+            git pull >> ../../logs/flame-graph-setup.log 2>&1;
+        popdir
+    popdir
+
+    echo "done";
+fi
 
 # Manage instances
 
@@ -189,9 +221,18 @@ if [ "$selfManaged" = false ]; then
     pushdir
         cd workspace/openhim-core-js;
         echo -n "Starting OpenHIM core... ";
-        node --harmony lib/server.js --conf=../../config/core-conf.json > ../../logs/openhim-core.log 2>&1 &
-        corePID=$!;
-        sleep 10; # give the process a chance to startup
+        if [ "$profile" = true ]; then
+            node --perf-basic-prof --harmony lib/server.js --conf=../../config/core-conf.json > ../../logs/openhim-core.log 2>&1 &
+            corePID=$!;
+            sleep 10; # give the process a chance to startup
+            echo -e "\n  Profiling PID = "$corePID
+            perf record -q -F 99 -p $corePID -g > /dev/null 2>&1 & 
+            perfPID=$!;
+        else
+            node --harmony lib/server.js --conf=../../config/core-conf.json > ../../logs/openhim-core.log 2>&1 &
+            corePID=$!;
+            sleep 10; # give the process a chance to startup
+        fi
         echo "done"
     popdir
 
@@ -249,16 +290,36 @@ if [ "$openhieSuite" = true ]; then
     echo "";
 fi
 
+# Generate flame graph
+if [ "$profile" = true ]; then
+    echo "Generating flame chart... ";
+    pushdir
+        cd workspace;
+        pushdir
+            cd openhim-core-js;
+            kill -SIGINT $perfPID
+            sleep 2 # allow perf to write data
+            perf script | ../FlameGraph/stackcollapse-perf.pl > ../out.perf-folded
+            rm -f perf.data
+        popdir
+        ./FlameGraph/flamegraph.pl --color=js -title="OpenHIM (green == JS, aqua == built-ins, yellow == C++, red == system)" out.perf-folded > perf-openhim.svg
+        rm out.perf-folded
+    popdir
+    echo "done";
+fi
 
 # Generate report
 
-echo -n "Generating report... "
+echo -n "Generating report... ";
 
 pushdir
     cd results;
     tar -xzf ../resources/report-assets.tar.gz;
     chmod 755 assets;
     chmod 755 assets/*;
+    if [ "$profile" = true ]; then
+        mv ../workspace/perf-openhim.svg assets/
+    fi
 popdir
 
 if [ "$openhieSuite" = true ]; then
