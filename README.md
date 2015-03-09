@@ -29,3 +29,6 @@ Self managed instance. The benchmark suite will not manage the OpenHIM and media
 
 #### -x MEDIATOR_PROPERTIES
 [OpenHIE Suite] A file containing the XDS.b Mediator properties. You can create a copy of `config/xds-mediator.properties` to get you started.
+
+#### -p
+Profile the application using perf_events and produce a flame graph in the results. **Note:** You must allow perf to run in uerspace to run this without root. To do this execute `echo '-1' | sudo tee /proc/sys/kernel/perf_event_paranoid`.

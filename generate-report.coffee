@@ -92,6 +92,11 @@ buildHtml = (results) ->
     <i>Lower is better</i>
     <svg style='height:500px'> </svg>
   </div>
+  <div id='profiling'>
+    <h1>Profiling - Flame Chart</h1>
+    <object type='image/svg+xml' data='assets/perf-openhim.svg'>No profiling data found - enable profiling with the -p option.</object>
+    <p>For information on how to read this flame chart, <a href='http://www.brendangregg.com/FlameGraphs/cpuflamegraphs'>see here</a></p>
+  </div>
   <hr/>
   <div>
     <br/><br/><br/><small><italic>Generated on #{moment().format('YYYY-MM-DD HH:mm:ss')}</italic></small>
