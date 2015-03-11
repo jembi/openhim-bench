@@ -1,15 +1,15 @@
 {
-    "name": "openhim-bench",
-    "description": "Benchmark suites for the OpenHIM and mediators",
-    "version": "0.1.0",
-    "private": true,
-    "dependencies": {
-        "coffee-script": "^1.8.0",
-        "express": "^4.12.0",
-        "body-parser": "^1.12.0",
-        "loadtest": "^1.2.6",
-        "mongodb": "^1.4.31",
-        "moment": "^2.9.0",
-        "q": "^1.2.0"
-    }
+  "name": "openhim-bench",
+  "description": "Benchmark suites for the OpenHIM and mediators",
+  "version": "0.2.0",
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.12.0",
+    "coffee-script": "^1.8.0",
+    "express": "^4.12.0",
+    "loadtest": "^1.2.6",
+    "moment": "^2.9.0",
+    "mongodb": "^1.4.34",
+    "q": "^1.2.0"
+  }
 }
