@@ -54,8 +54,6 @@ transactionDoc =
     property: "prop1", value: "prop1-value1"
     property:"prop2", value: "prop-value1"
 
-#console.log transactions[0]
-
 cloneObj = (obj) ->
   return JSON.parse(JSON.stringify(obj))
 
