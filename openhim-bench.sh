@@ -21,7 +21,9 @@ OPTIONS are:
     -x MEDIATOR_PROPERTIES
         [OpenHIE Suite] A file containing the XDS.b Mediator properties. You can create a copy of config/xds-mediator.properties to get you started.
     -p
-        Profile the application using perf_events and produce a flame graph in the results. Note: You must allow perf to run in userspace to run this without root. To do this execute: echo '-1' | sudo tee /proc/sys/kernel/perf_event_paranoid.
+        Profile the application using perf_events and produce a flame graph in the results. Note: You must allow perf to run in userspace to run this without root. To do this execute: echo '-1' | sudo tee /proc/sys/kernel/perf_event_paranoid. Can only be used with NON-self-managed instances.
+    -l N
+        Load the mongodb with N transactions, where N is a number. Note: 100 000 transaction takes about 2mins (and 6GB) and 1 000 000 transactions takes about 20mins (and 60GB!). Can only be used with NON-self-managed instances.
 
 EOF
 )
@@ -30,13 +32,14 @@ branch="master"
 url="localhost:6001"
 selfManaged=false
 profile=false
+load=0
 
 openhieSuite=false
 xdsMediatorBranch="master"
 xdsProps="config/xds-mediator.properties"
 
 
-while getopts ":b:hor:s:xp" opt; do
+while getopts ":b:hor:s:xpl:" opt; do
     case $opt in
         b)
             branch=$OPTARG
@@ -60,6 +63,9 @@ while getopts ":b:hor:s:xp" opt; do
             ;;
         p)
             profile=true
+            ;;
+        l)
+            load=$OPTARG
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -218,6 +224,15 @@ if [ "$selfManaged" = false ]; then
     mongo config/core-conf-mongo.setup.js > logs/mongo-config.log 2>&1;
     echo "done"
 
+    if [ "$load" -gt 0 ]; then
+        echo -n "Loading database with "$load" documents... "
+        coffee load-mongo.coffee $load
+        echo "done"
+        echo -n "Giving the system 30s to recover before running performance tests... "
+        sleep 30;
+        echo "done"
+    fi
+
     pushdir
         cd workspace/openhim-core-js;
         echo -n "Starting OpenHIM core... ";
@@ -347,6 +362,8 @@ if [ "$selfManaged" = false ]; then
         kill $mockregPID;
         kill $mockrepPID;
     fi
+
+    mongo openhim-bench --eval "db.dropDatabase()" > /dev/null 2>&1
 
     echo "done";
 fi
