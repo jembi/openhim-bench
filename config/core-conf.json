@@ -12,7 +12,11 @@
   },
   "rerun": {
     "httpPort": 6100,
-    "host": "localhost"
+    "host": "localhost",
+    "processor": {
+      "enabled": true,
+      "pollPeriodMillis": 2000
+    }
   },
   "tcpAdapter": {
     "httpReceiver": {
@@ -27,5 +31,21 @@
   "authentication": {
     "enableMutualTLSAuthentication": false,
     "enableBasicAuthentication": true
+  },
+  "auditing": {
+    "servers": {
+      "udp": {
+        "enabled": false,
+        "port": 6050
+      },
+      "tls": {
+        "enabled": false,
+        "port": 6051
+      },
+      "tcp": {
+        "enabled": false,
+        "port": 6052
+      }
+    }
   }
 }
