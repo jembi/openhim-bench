@@ -127,6 +127,8 @@ mockrepPID=""
 
 perfPID=""
 
+gitCommitHash=""
+
 function pushdir {
     pushd . > /dev/null 2>&1;
 }
@@ -194,6 +196,8 @@ if [ "$selfManaged" = false ]; then
                 echo -e "\nA problem occurred while building core. Check the logs for details.";
                 unlockAndExit 1;
             fi
+
+            gitCommitHash=`git rev-parse HEAD`;
         popdir
 
         if [ "$openhieSuite" = true ]; then
@@ -288,20 +292,20 @@ fi
 
 echo "";
 echo "Running benchmark-basic";
-coffee benchmark-basic.coffee $url;
+coffee benchmark-basic.coffee $url $gitCommitHash;
 echo "";
 
 if [ "$selfManaged" = false ]; then
     # Benchmark the mock service direclty at high concurrency
     # for comparison to the core results
     echo "Running benchmark-mockservice";
-    coffee benchmark-mockservice.coffee "localhost:6050";
+    coffee benchmark-mockservice.coffee "localhost:6050" $gitCommitHash;
     echo "";
 fi
 
 if [ "$openhieSuite" = true ]; then
     echo "Running benchmark-openhie";
-    coffee benchmark-openhie.coffee $url;
+    coffee benchmark-openhie.coffee $url $gitCommitHash;
     echo "";
 fi
 

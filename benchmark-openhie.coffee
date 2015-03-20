@@ -51,9 +51,6 @@ saveEncounter10seconds = (host, port) ->
 
 
 do ->
-  target = bench.getHostAndPort()
-  console.log "Testing #{target.host}:#{target.port}"
-
   benchmarks = [getEncounter10, getEncounter10seconds, saveEncounter10, saveEncounter10seconds]
 
-  bench.runBenchmarks target.host, target.port, benchmarks
+  bench.runBenchmarks benchmarks
