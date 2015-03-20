@@ -341,8 +341,12 @@ pushdir
     fi
 popdir
 
-if [ "$openhieSuite" = true ]; then
+if [ "$openhieSuite" = true ] && [ "$selfManaged" = true ]; then
+    coffee generate-report.coffee -o -s;
+elif [ "$openhieSuite" = true ]; then
     coffee generate-report.coffee -o;
+elif [ "$selfManaged" = true ]; then
+    coffee generate-report.coffee -s;
 else
     coffee generate-report.coffee;
 fi
