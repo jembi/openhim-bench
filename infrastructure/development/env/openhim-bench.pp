@@ -11,23 +11,31 @@ Exec {
     user => "root",
 }
 
+exec { "apt-get update":
+    command => "apt-get update",
+    user => "root",
+}
+
 package { "build-essential":
     ensure => "installed",
+    require => Exec['apt-get update'],
 }
 
 package { "openjdk-7-jdk":
     ensure => "installed",
+    require => Exec['apt-get update'],
     install_options => ['--no-install-recommends'],
 }
 
 package { "maven":
     ensure => "installed",
     install_options => ['--no-install-recommends'],
-    require => Package["openjdk-7-jdk"],
+    require => [ Exec['apt-get update'], Package["openjdk-7-jdk"] ],
 }
 
 package { "git":
     ensure => "installed",
+    require => Exec['apt-get update'],
 }
 
 
@@ -69,4 +77,5 @@ exec { "install-coffee":
 
 file { "/usr/lib/jvm/java-7-openjdk-i386/jre/lib/security/jssecacerts":
     source => "/vagrant/jssecacerts",
+    require => Package["openjdk-7-jdk"],
 }
