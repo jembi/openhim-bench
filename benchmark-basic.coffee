@@ -99,13 +99,10 @@ basicPOST10secondHighConcurrent = (host, port) ->
 
 
 do ->
-  target = bench.getHostAndPort()
-  console.log "Testing #{target.host}:#{target.port}"
-
   benchmarks = [
     basicGET100, basicPOST100, basicGET10second, basicPOST10second,
     basicGET10secondConcurrent, basicPOST10secondConcurrent,
     basicGET10secondHighConcurrent, basicPOST10secondHighConcurrent
   ]
 
-  bench.runBenchmarks target.host, target.port, benchmarks
+  bench.runBenchmarks benchmarks

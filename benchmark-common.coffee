@@ -25,7 +25,7 @@ exports.initMongo = initMongo = (callback) ->
     db = database
     callback null, db
 
-addResultsToMongo = (benchmarkName, results, callback) ->
+addResultsToMongo = (benchmarkName, results, gitCommitHash, callback) ->
   initMongo (err, db) ->
     return callback err if err
 
@@ -38,10 +38,15 @@ addResultsToMongo = (benchmarkName, results, callback) ->
       results.name = benchmarkName
       results.date = new Date()
       results.system = getSystemInfo()
+      results.gitCommitHash = gitCommitHash if gitCommitHash?
       mongoCollection.insert results, callback
 
 
-exports.getHostAndPort = ->
+params = null
+
+getParams = ->
+  return params if params?
+
   res = {}
   res.host = 'localhost'
   res.port = '5001'
@@ -54,6 +59,12 @@ exports.getHostAndPort = ->
     res.host = url[0]
     res.port = url[1]
 
+  if process.argv.length > 3
+    res.gitCommitHash = process.argv[3] if process.argv[3]
+
+  params = res
+  console.log "Testing #{params.host}:#{params.port}"
+  console.log "OpenHIM Git Commit: #{params.gitCommitHash}"
   return res
 
 exports.exit = exit = (err) ->
@@ -64,10 +75,12 @@ exports.exit = exit = (err) ->
   else
     process.exit 0
 
-exports.runBenchmarks = runBenchmarks = (host, port, benchmarks) ->
+exports.runBenchmarks = runBenchmarks = (benchmarks) ->
   return exit null if benchmarks.length is 0
 
-  benchmark = benchmarks[0](host, port)
+  params = getParams()
+
+  benchmark = benchmarks[0](params.host, params.port)
   console.log "\nBenchmark: #{benchmark.name}"
 
   loadtest.loadTest benchmark.options, (err, results) ->
@@ -75,6 +88,6 @@ exports.runBenchmarks = runBenchmarks = (host, port, benchmarks) ->
 
     console.log results
 
-    addResultsToMongo benchmark.name, results, (err) ->
+    addResultsToMongo benchmark.name, results, params.gitCommitHash, (err) ->
       return exit err if err
-      runBenchmarks host, port, benchmarks[1..]
+      runBenchmarks benchmarks[1..]

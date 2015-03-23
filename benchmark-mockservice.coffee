@@ -14,9 +14,6 @@ mockService = (host, port) ->
 
 
 do ->
-  target = bench.getHostAndPort()
-  console.log "Testing #{target.host}:#{target.port}"
-
   benchmarks = [mockService]
 
-  bench.runBenchmarks target.host, target.port, benchmarks
+  bench.runBenchmarks benchmarks

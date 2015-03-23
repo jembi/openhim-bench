@@ -3,7 +3,7 @@ moment = require 'moment'
 fs = require 'fs'
 Q = require 'q'
 
-buildHtml = (results) ->
+buildHtml = (results, selfManaged, hashTickMap) ->
   """
 <html>
 <head>
@@ -32,6 +32,12 @@ buildHtml = (results) ->
         }
       </tbody>
     <table>
+    #{if not selfManaged
+        """<h3>Git Commit</h3>
+        <p><a target="_blank" href="https://github.com/jembi/openhim-core-js/commit/#{results.gitCommitHash}">#{results.gitCommitHash}</a></p>"""
+      else
+        ""
+    }
   </div>
   <div id='total'>
     <h2>Total Requests</h2>
@@ -66,32 +72,36 @@ buildHtml = (results) ->
     faster than routing through the OpenHIM first.
   </div>
   <hr/>
-  <h1>Comparison to Previous Benchmarks</h1>
-  <div id='basic100TimeSeries'>
-    <h2>Basic 100 Time Taken</h2>
-    <i>Lower is better</i>
-    <svg style='height:500px'> </svg>
-  </div>
-  <div id='getRPSTimeSeries'>
-    <h2>GET Requests Per Second</h2>
-    <i>Higher is better</i>
-    <svg style='height:500px'> </svg>
-  </div>
-  <div id='postRPSTimeSeries'>
-    <h2>POST Requests Per Second</h2>
-    <i>Higher is better</i>
-    <svg style='height:500px'> </svg>
-  </div>
-  <div id='getLatencyTimeSeries'>
-    <h2>GET Mean Latency</h2>
-    <i>Lower is better</i>
-    <svg style='height:500px'> </svg>
-  </div>
-  <div id='postLatencyTimeSeries'>
-    <h2>POST Mean Latency</h2>
-    <i>Lower is better</i>
-    <svg style='height:500px'> </svg>
-  </div>
+  #{if not selfManaged
+      """<h1>Comparison to Previous Benchmarks</h1>
+      <div id='basic100TimeSeries'>
+        <h2>Basic 100 Time Taken</h2>
+        <i>Lower is better</i>
+        <svg style='height:700px'> </svg>
+      </div>
+      <div id='getRPSTimeSeries'>
+        <h2>GET Requests Per Second</h2>
+        <i>Higher is better</i>
+        <svg style='height:700px'> </svg>
+      </div>
+      <div id='postRPSTimeSeries'>
+        <h2>POST Requests Per Second</h2>
+        <i>Higher is better</i>
+        <svg style='height:700px'> </svg>
+      </div>
+      <div id='getLatencyTimeSeries'>
+        <h2>GET Mean Latency</h2>
+        <i>Lower is better</i>
+        <svg style='height:700px'> </svg>
+      </div>
+      <div id='postLatencyTimeSeries'>
+        <h2>POST Mean Latency</h2>
+        <i>Lower is better</i>
+        <svg style='height:700px'> </svg>
+      </div>"""
+    else
+      ""
+  }
   <div id='profiling'>
     <h1>Profiling - Flame Chart</h1>
     <object type='image/svg+xml' data='assets/perf-openhim.svg'>No profiling data found - enable profiling with the -p option.</object>
@@ -102,6 +112,7 @@ buildHtml = (results) ->
     <br/><br/><br/><small><italic>Generated on #{moment().format('YYYY-MM-DD HH:mm:ss')}</italic></small>
   </div>
   <script type=\"text/javascript\">
+  var hashTickMap = #{if not selfManaged then JSON.stringify hashTickMap else null};
 
   function barGraph(component, data) {
     return function() {
@@ -124,18 +135,21 @@ buildHtml = (results) ->
   function lineGraph(component, yLabel, data) {
     return function() {
       var chart = nv.models.lineChart()
-        .margin({left: 100, right: 50})
+        .useInteractiveGuideline(true)
+        .margin({left: 100, right: 50, bottom: 100})
       ;
 
       chart.xAxis
         .tickFormat(function(d) {
-          return d3.time.format('%Y-%m-%d')(new Date(d))
-      });
+          return hashTickMap[""+d];
+        });
       chart.yAxis
         .axisLabel(yLabel)
         .tickFormat(function(d) {
           return d;
-      });
+        });
+
+      chart.xAxis.rotateLabels(-45);
 
       d3.select(component)
         .datum(data)
@@ -151,63 +165,89 @@ buildHtml = (results) ->
   nv.addGraph(barGraph('#rps svg', #{JSON.stringify [{key: "Requests Per Second", values: results.rps }] }));
   nv.addGraph(barGraph('#meanLatency svg', #{JSON.stringify [{key: "Mean Latency (ms)", values: results.meanLatency }] }));
   nv.addGraph(barGraph('#maxLatency svg', #{JSON.stringify [{key: "Max Latency (ms)", values: results.maxLatency }] }));
-  nv.addGraph(lineGraph(
-    '#basic100TimeSeries svg', 'Time (s)',
-    #{JSON.stringify [
-      {key: "Basic GET 100", values: results.basicGET100TimeSeries },
-      {key: "Basic POST 100", values: results.basicPOST100TimeSeries }
-    ]})
-  );
-  nv.addGraph(lineGraph(
-    '#getRPSTimeSeries svg', 'RPS',
-    #{JSON.stringify [
-      {key: "10s", values: results.basicGET10sTimeSeries },
-      {key: "10s Concurrent", values: results.basicGET10sConcurrentTimeSeries },
-      {key: "10s Highly Concurrent", values: results.basicGET10sHighConcurrentTimeSeries }
-    ]})
-  );
-  nv.addGraph(lineGraph(
-    '#postRPSTimeSeries svg', 'RPS',
-    #{JSON.stringify [
-      {key: "10s", values: results.basicPOST10sTimeSeries },
-      {key: "10s Concurrent", values: results.basicPOST10sConcurrentTimeSeries },
-      {key: "10s Highly Concurrent", values: results.basicPOST10sHighConcurrentTimeSeries }
-    ]})
-  );
-  nv.addGraph(lineGraph(
-    '#getLatencyTimeSeries svg', 'Mean Latency (ms)',
-    #{JSON.stringify [
-      {key: "100", values: results.basicGET10sMeanLatencyTimeSeries },
-      {key: "10s", values: results.basicGET10sMeanLatencyTimeSeries },
-      {key: "10s Concurrent", values: results.basicGET10sConcurrentMeanLatencyTimeSeries },
-      {key: "10s Highly Concurrent", values: results.basicGET10sHighConcurrentMeanLatencyTimeSeries }
-    ]})
-  );
-  nv.addGraph(lineGraph(
-    '#postLatencyTimeSeries svg', 'Mean Latency (ms)',
-    #{JSON.stringify [
-      {key: "100", values: results.basicPOST10sMeanLatencyTimeSeries },
-      {key: "10s", values: results.basicPOST10sMeanLatencyTimeSeries },
-      {key: "10s Concurrent", values: results.basicPOST10sConcurrentMeanLatencyTimeSeries },
-      {key: "10s Highly Concurrent", values: results.basicPOST10sHighConcurrentMeanLatencyTimeSeries }
-    ]})
-  );
+  #{if not selfManaged
+      """nv.addGraph(lineGraph(
+        '#basic100TimeSeries svg', 'Time (s)',
+        #{JSON.stringify [
+          {key: "Basic GET 100", values: results.basicGET100TimeSeries },
+          {key: "Basic POST 100", values: results.basicPOST100TimeSeries }
+        ]})
+      );
+      nv.addGraph(lineGraph(
+        '#getRPSTimeSeries svg', 'RPS',
+        #{JSON.stringify [
+          {key: "10s", values: results.basicGET10sTimeSeries },
+          {key: "10s Concurrent", values: results.basicGET10sConcurrentTimeSeries },
+          {key: "10s Highly Concurrent", values: results.basicGET10sHighConcurrentTimeSeries }
+        ]})
+      );
+      nv.addGraph(lineGraph(
+        '#postRPSTimeSeries svg', 'RPS',
+        #{JSON.stringify [
+          {key: "10s", values: results.basicPOST10sTimeSeries },
+          {key: "10s Concurrent", values: results.basicPOST10sConcurrentTimeSeries },
+          {key: "10s Highly Concurrent", values: results.basicPOST10sHighConcurrentTimeSeries }
+        ]})
+      );
+      nv.addGraph(lineGraph(
+        '#getLatencyTimeSeries svg', 'Mean Latency (ms)',
+        #{JSON.stringify [
+          {key: "100", values: results.basicGET10sMeanLatencyTimeSeries },
+          {key: "10s", values: results.basicGET10sMeanLatencyTimeSeries },
+          {key: "10s Concurrent", values: results.basicGET10sConcurrentMeanLatencyTimeSeries },
+          {key: "10s Highly Concurrent", values: results.basicGET10sHighConcurrentMeanLatencyTimeSeries }
+        ]})
+      );
+      nv.addGraph(lineGraph(
+        '#postLatencyTimeSeries svg', 'Mean Latency (ms)',
+        #{JSON.stringify [
+          {key: "100", values: results.basicPOST10sMeanLatencyTimeSeries },
+          {key: "10s", values: results.basicPOST10sMeanLatencyTimeSeries },
+          {key: "10s Concurrent", values: results.basicPOST10sConcurrentMeanLatencyTimeSeries },
+          {key: "10s Highly Concurrent", values: results.basicPOST10sHighConcurrentMeanLatencyTimeSeries }
+        ]})
+      );"""
+    else
+      ""
+  }
   </script>
 </body>
 </html>
 """
 
 
+hashHashMap = {}
+hashTickMap = {}
+nextTick = 0
+
+subHash = (hash) -> "#{hash?[...6]}..."
+
+mapGitCommitHash = (hash) ->
+  if hashHashMap[hash]? then return hashHashMap[hash]
+
+  hashHashMap[hash] = nextTick
+  hashTickMap[nextTick] = subHash hash
+  nextTick++
+  return hashHashMap[hash]
+
 do -> bench.initMongo (err, db) ->
   return bench.exit err if err
 
-  includeOpenhie = process.argv.length > 2 and process.argv[2] is '-o'
+  includeOpenhie = false
+  selfManaged = false
+  if process.argv.length > 2
+    if process.argv[2] is '-o' then includeOpenhie = process.argv[2]
+    if process.argv[2] is '-s' then selfManaged = process.argv[2]
+  if process.argv.length > 3
+    if process.argv[3] is '-o' then includeOpenhie = process.argv[3]
+    if process.argv[3] is '-s' then selfManaged = process.argv[3]
 
   db.collections (err, collections) ->
     collections = collections.map (c) -> c.collectionName
 
     benchmarkResults =
       system: null
+      gitCommitHash: null
       total: []
       rps: []
       meanLatency: []
@@ -243,6 +283,8 @@ do -> bench.initMongo (err, db) ->
             if includeOpenhie or not results[0].name.toLowerCase().contains 'openhie'
               if not benchmarkResults.system
                 benchmarkResults.system = results[0].system
+              if not benchmarkResults.gitCommitHash
+                benchmarkResults.gitCommitHash = results[0].gitCommitHash
 
               if c is 'MockServiceDirect'
                 benchmarkResults.mockServiceResults = results[0]
@@ -253,11 +295,10 @@ do -> bench.initMongo (err, db) ->
                 benchmarkResults.maxLatency.push label: results[0].name, value: results[0].maxLatencyMs
 
               pushResults = (series, metric, results) ->
-                format = (date) -> moment(date).format('YYYY-MM-DD')
                 for r in results
-                  # only add the last item for each day
-                  if series.length is 0 or format(series[ series.length-1 ].x) isnt format(r.date)
-                    series.push x: +r.date, y: r["#{metric}"]
+                  series.push
+                    x: mapGitCommitHash r.gitCommitHash
+                    y: r["#{metric}"]
 
               if c is 'BasicGET100'
                 pushResults benchmarkResults.basicGET100TimeSeries, 'totalTimeSeconds', results
@@ -293,4 +334,4 @@ do -> bench.initMongo (err, db) ->
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      fs.writeFile "#{bench.appRoot}/results/index.html", buildHtml(benchmarkResults), -> bench.exit()
+      fs.writeFile "#{bench.appRoot}/results/index.html", buildHtml(benchmarkResults, selfManaged, hashTickMap), -> bench.exit()
