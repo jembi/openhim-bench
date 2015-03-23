@@ -136,7 +136,7 @@ buildHtml = (results, selfManaged, hashTickMap) ->
     return function() {
       var chart = nv.models.lineChart()
         .useInteractiveGuideline(true)
-        .margin({left: 100, right: 50, bottom: 200})
+        .margin({left: 100, right: 50, bottom: 100})
       ;
 
       chart.xAxis
@@ -220,11 +220,13 @@ hashHashMap = {}
 hashTickMap = {}
 nextTick = 0
 
+subHash = (hash) -> "#{hash?[...6]}..."
+
 mapGitCommitHash = (hash) ->
   if hashHashMap[hash]? then return hashHashMap[hash]
 
   hashHashMap[hash] = nextTick
-  hashTickMap[nextTick] = hash
+  hashTickMap[nextTick] = subHash hash
   nextTick++
   return hashHashMap[hash]
 
@@ -297,7 +299,6 @@ do -> bench.initMongo (err, db) ->
                   series.push
                     x: mapGitCommitHash r.gitCommitHash
                     y: r["#{metric}"]
-                    hash: r.gitCommitHash
 
               if c is 'BasicGET100'
                 pushResults benchmarkResults.basicGET100TimeSeries, 'totalTimeSeconds', results
